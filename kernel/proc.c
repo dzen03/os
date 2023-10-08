@@ -681,3 +681,54 @@ procdump(void)
     printf("\n");
   }
 }
+
+void
+dump(void)
+{
+  struct proc* p = myproc();
+
+  int index;
+  uint64* reg_addr;
+
+  for (index = 2, reg_addr = &(p->trapframe->s2); reg_addr <= &(p->trapframe->s11); ++reg_addr, ++index)
+    printf("s%d = %d\n", index, *reg_addr);
+
+}
+
+int
+dump2(int pid, int register_num, uint64* return_value)
+{
+  if (register_num < 2 || register_num > 11)
+    return -3; // incorrect register index
+
+  struct proc* my_p = myproc();
+  struct proc *p;
+
+  int exit_code = -2;
+
+  acquire(&wait_lock);
+  for(p = proc; p < &proc[NPROC]; p++)
+  {
+    acquire(&p->lock);
+    if (p->pid == pid)
+    {
+      if (p->pid != my_p->pid && p->parent->pid != my_p->pid)
+        exit_code = -1; // do not have rights to read
+      else
+      {
+        uint64* res = &(p->trapframe->s2) + (uint64)(register_num - 2);
+
+        if (copyout(my_p->pagetable, (uint64)return_value, (char*)res, sizeof(uint64)) == 0)
+          exit_code = 0; // ok
+        else
+          exit_code = -4; // incorrect return address
+      }
+    }
+    release(&p->lock);
+    if (exit_code != -2)
+      break; // need to exit
+  }
+  release(&wait_lock);
+
+  return exit_code;
+}
