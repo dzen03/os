@@ -1,5 +1,7 @@
 # OS
 
+Labs are done on [`eeb7b415dbcb12cc362d0783e41c3d1f44066b17`](https://github.com/mit-pdos/xv6-public/tree/eeb7b415dbcb12cc362d0783e41c3d1f44066b17) commit of XV6
+
 ## Installing XV6 on Apple Silicon devices (M1/M2)
 1. Install [Homebrew](http://brew.sh/) *(if not already installed)*:
    - `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
@@ -25,7 +27,7 @@
    - `sudo apt update & sudo apt install gcc gcc-riscv-linux-gnu qemu-system-riscv64 git`
    - `git clone https://github.com/mit-pdos/xv6-riscv.git`
    - `cd xv6-riscv`
-   - `make TOLLPREFIX=riscv-linux-gnu-`
-   - `make TOLLPREFIX=riscv-linux-gnu- qemu`
+   - `make TOOLPREFIX=riscv-linux-gnu-`
+   - `make TOOLPREFIX=riscv-linux-gnu- qemu`
 
 **DONE**
