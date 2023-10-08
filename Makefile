@@ -137,8 +137,8 @@ UPROGS=\
 	$U/_dump2tests\
 	$U/_test\
 
-fs.img: mkfs/mkfs README $(UPROGS)
-	mkfs/mkfs fs.img README $(UPROGS)
+fs.img: mkfs/mkfs XV6_README $(UPROGS)
+	mkfs/mkfs fs.img XV6_README $(UPROGS)
 
 -include kernel/*.d user/*.d
 
