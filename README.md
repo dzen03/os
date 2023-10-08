@@ -1,6 +1,6 @@
 # OS
 
-Labs are done on [`eeb7b415dbcb12cc362d0783e41c3d1f44066b17`](https://github.com/mit-pdos/xv6-public/tree/eeb7b415dbcb12cc362d0783e41c3d1f44066b17) commit of XV6
+Labs are done on [`f5b93ef12f7159f74f80f94729ee4faabe42c360`](https://github.com/mit-pdos/xv6-riscv/tree/f5b93ef12f7159f74f80f94729ee4faabe42c360) commit of XV6
 
 ## Installing XV6 on Apple Silicon devices (M1/M2)
 1. Install [Homebrew](http://brew.sh/) *(if not already installed)*:
