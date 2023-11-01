@@ -31,3 +31,7 @@ Labs are done on [`f5b93ef12f7159f74f80f94729ee4faabe42c360`](https://github.com
    - `make TOOLPREFIX=riscv-linux-gnu- qemu`
 
 **DONE**
+
+## Additional tasks
+1. Task 1 for Lab1: \
+   Write buffered chanel from Go with usage example

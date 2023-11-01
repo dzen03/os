@@ -452,6 +452,8 @@ scheduler(void)
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
 
+    int found = 0;
+
     for(p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
       if(p->state == RUNNABLE) {
@@ -465,8 +467,16 @@ scheduler(void)
         // Process is done running for now.
         // It should have changed its p->state before coming back.
         c->proc = 0;
+
+        found = 1;
       }
       release(&p->lock);
+    }
+
+    if(found == 0) // there is no process runnable; don't busy-wait
+    {
+      intr_on();
+      asm volatile("wfi"); // wait for interruption command
     }
   }
 }
