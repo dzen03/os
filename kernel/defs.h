@@ -8,6 +8,7 @@ struct spinlock;
 struct sleeplock;
 struct stat;
 struct superblock;
+struct chan;
 
 // bio.c
 void            binit(void);
@@ -75,6 +76,12 @@ int             pipealloc(struct file**, struct file**);
 void            pipeclose(struct pipe*, int);
 int             piperead(struct pipe*, uint64, int);
 int             pipewrite(struct pipe*, uint64, int);
+
+// chan.c
+int             chanalloc(struct file**, struct file**, int count);
+void            chanclose(struct chan*, int);
+int             chanread(struct chan*, uint64, int);
+int             chanwrite(struct chan*, uint64, int);
 
 // printf.c
 void            printf(char*, ...);

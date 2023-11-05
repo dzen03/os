@@ -3,7 +3,7 @@
 Labs are done on [`f5b93ef12f7159f74f80f94729ee4faabe42c360`](https://github.com/mit-pdos/xv6-riscv/tree/f5b93ef12f7159f74f80f94729ee4faabe42c360) commit of XV6
 
 ## Installing XV6 on Apple Silicon devices (M1/M2)
-1. Install [Homebrew](http://brew.sh/) *(if not already installed)*:
+1. Install [Homebrew](http://brew.sh/) *(if not installed yet)*:
    - `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
 2. Get [riscv-tools](https://github.com/riscv-software-src/homebrew-riscv) *(it will build it from source, so be patient)*:
    - `brew tap riscv-software-src/riscv`
