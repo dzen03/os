@@ -30,6 +30,8 @@ OBJS = \
   $K/plic.o \
   $K/virtio_disk.o \
   $K/chan.o \
+  $K/buddy.o \
+  $K/list.o \
 
 # riscv64-unknown-elf- or riscv64-linux-gnu-
 # perhaps in /opt/riscv/bin
@@ -138,6 +140,7 @@ UPROGS=\
 	$U/_dump2tests\
 	$U/_test\
 	$U/_chan_test\
+	$U/_alloctest\
 
 fs.img: mkfs/mkfs XV6_README $(UPROGS)
 	mkfs/mkfs fs.img XV6_README $(UPROGS)
