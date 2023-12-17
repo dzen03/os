@@ -212,7 +212,7 @@ void            bd_free(void*);
 int             blk_index_next(int, char*);
 int             log2(uint64);
 void            bd_mark(void*, void*);
-int             bd_initfree_pair(int, int);
+int             bd_initfree_pair(int, int, int);
 int             bd_initfree(void*, void*);
 int             bd_mark_data_structures(char*);
 int             bd_mark_unavailable(void*, void*);

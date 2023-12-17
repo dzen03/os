@@ -58,6 +58,13 @@ void bit_clear(char *array, int index) {
   array[index / 8] = (b & ~m);
 }
 
+// Invert bit at position index in array
+void bit_invert(char *array, int index) {
+  char b = array[index / 8];
+  char m = (1 << (index % 8));
+  array[index / 8] = (b ^ m);
+}
+
 // Print a bit vector as a list of ranges of 1 bits
 void bd_print_vector(char *vector, int len) {
   int last, lb;
@@ -82,7 +89,7 @@ void bd_print() {
     printf("size %d (blksz %d nblk %d): free list: ", k, BLK_SIZE(k), NBLK(k));
     lst_print(&bd_sizes[k].free);
     printf("  alloc:");
-    bd_print_vector(bd_sizes[k].alloc, NBLK(k));
+    bd_print_vector(bd_sizes[k].alloc, NBLK(k)); // TODO fix this
     if (k > 0) {
       printf("  split:");
       bd_print_vector(bd_sizes[k].split, NBLK(k));
@@ -132,13 +139,13 @@ void *bd_malloc(uint64 nbytes) {
 
   // Found a block; pop it and potentially split it.
   char *p = lst_pop(&bd_sizes[k].free);
-  bit_set(bd_sizes[k].alloc, blk_index(k, p));
+  bit_invert(bd_sizes[k].alloc, blk_index(k, p) / 2);
   for (; k > fk; k--) {
     // split a block at size k and mark one half allocated at size k-1
     // and put the buddy on the free list at size k-1
     char *q = p + BLK_SIZE(k - 1);  // p's buddy
     bit_set(bd_sizes[k].split, blk_index(k, p));
-    bit_set(bd_sizes[k - 1].alloc, blk_index(k - 1, p));
+    bit_invert(bd_sizes[k - 1].alloc, blk_index(k - 1, p) / 2);
     lst_push(&bd_sizes[k - 1].free, q);
   }
   release(&lock);
@@ -166,8 +173,9 @@ void bd_free(void *p) {
   for (k = size(p); k < MAXSIZE; k++) {
     int bi = blk_index(k, p);
     int buddy = (bi % 2 == 0) ? bi + 1 : bi - 1;
-    bit_clear(bd_sizes[k].alloc, bi);           // free p at size k
-    if (bit_isset(bd_sizes[k].alloc, buddy)) {  // is buddy allocated?
+    int need_to_merge = bit_isset(bd_sizes[k].alloc, buddy / 2);
+    bit_invert(bd_sizes[k].alloc, bi / 2);      // free p at size k
+    if (!need_to_merge) {                       // is buddy allocated?
       break;                                    // break out of loop
     }
     // budy is free; merge with buddy
@@ -215,23 +223,23 @@ void bd_mark(void *start, void *stop) {
         // if a block is allocated at size k, mark it as split too.
         bit_set(bd_sizes[k].split, bi);
       }
-      bit_set(bd_sizes[k].alloc, bi);
+      bit_invert(bd_sizes[k].alloc, bi / 2);
     }
   }
 }
 
 // If a block is marked as allocated and the buddy is free, put the
 // buddy on the free list at size k.
-int bd_initfree_pair(int k, int bi) {
+int bd_initfree_pair(int k, int bi, int is_right) {
   int buddy = (bi % 2 == 0) ? bi + 1 : bi - 1;
   int free = 0;
-  if (bit_isset(bd_sizes[k].alloc, bi) != bit_isset(bd_sizes[k].alloc, buddy)) {
+  if (bit_isset(bd_sizes[k].alloc, bi / 2)) {
     // one of the pair is free
     free = BLK_SIZE(k);
-    if (bit_isset(bd_sizes[k].alloc, bi))
-      lst_push(&bd_sizes[k].free, addr(k, buddy));  // put buddy on free list
+    if (buddy < bi)
+      lst_push(&bd_sizes[k].free, addr(k, (is_right ? buddy : bi)));
     else
-      lst_push(&bd_sizes[k].free, addr(k, bi));  // put bi on free list
+      lst_push(&bd_sizes[k].free, addr(k, (!is_right ? buddy : bi)));
   }
   return free;
 }
@@ -243,11 +251,11 @@ int bd_initfree(void *bd_left, void *bd_right) {
   int free = 0;
 
   for (int k = 0; k < MAXSIZE; k++) {  // skip max size
-    int left = blk_index_next(k, bd_left);
+    int left = blk_index_next(k, bd_left); // TODO fix
     int right = blk_index(k, bd_right);
-    free += bd_initfree_pair(k, left);
+    free += bd_initfree_pair(k, left, 0);
     if (right <= left) continue;
-    free += bd_initfree_pair(k, right);
+    free += bd_initfree_pair(k, right, 1);
   }
   return free;
 }
@@ -297,7 +305,7 @@ void bd_init(void *base, void *end) {
   // initialize free list and allocate the alloc array for each size k
   for (int k = 0; k < nsizes; k++) {
     lst_init(&bd_sizes[k].free);
-    sz = sizeof(char) * ROUNDUP(NBLK(k), 8) / 8;
+    sz = sizeof(char) * ROUNDUP(NBLK(k) / 2 + NBLK(k) % 2, 8) / 8;
     bd_sizes[k].alloc = p;
     memset(bd_sizes[k].alloc, 0, sz);
     p += sz;
@@ -330,4 +338,5 @@ void bd_init(void *base, void *end) {
     printf("free %d %d\n", free, BLK_SIZE(MAXSIZE) - meta - unavailable);
     panic("bd_init: free mem");
   }
+
 }
