@@ -9,34 +9,22 @@
 #include "riscv.h"
 #include "defs.h"
 
-void freerange(void *pa_start, void *pa_end);
+extern char end[];  // first address after kernel.
+                    // defined by kernel.ld.
 
-extern char end[]; // first address after kernel.
-                   // defined by kernel.ld.
+struct spinlock refs_lock;
+uint64 pages_count;
+uint8 *refs;
 
-struct run {
-  struct run *next;
-};
+#define PTR_TO_REFS(x) (uint64)(((uint64)x - PGROUNDUP((uint64)end)) / PGSIZE) 
 
-struct {
-  struct spinlock lock;
-  struct run *freelist;
-} kmem;
+void kinit() {
+  char *p = (char *)PGROUNDUP((uint64)end);
+  bd_init(p, (void *)PHYSTOP);
 
-void
-kinit()
-{
-  initlock(&kmem.lock, "kmem");
-  freerange(end, (void*)PHYSTOP);
-}
-
-void
-freerange(void *pa_start, void *pa_end)
-{
-  char *p;
-  p = (char*)PGROUNDUP((uint64)pa_start);
-  for(; p + PGSIZE <= (char*)pa_end; p += PGSIZE)
-    kfree(p);
+  refs = bd_malloc(sizeof(uint8) * (PTR_TO_REFS(PHYSTOP) + 1));
+  memset(refs, 0, pages_count);
+  initlock(&refs_lock, "page_refs_lock");
 }
 
 // Free the page of physical memory pointed at by pa,
@@ -44,22 +32,18 @@ freerange(void *pa_start, void *pa_end)
 // call to kalloc().  (The exception is when
 // initializing the allocator; see kinit above.)
 void
-kfree(void *pa)
-{
-  struct run *r;
-
-  if(((uint64)pa % PGSIZE) != 0 || (char*)pa < end || (uint64)pa >= PHYSTOP)
-    panic("kfree");
-
-  // Fill with junk to catch dangling refs.
-  memset(pa, 1, PGSIZE);
-
-  r = (struct run*)pa;
-
-  acquire(&kmem.lock);
-  r->next = kmem.freelist;
-  kmem.freelist = r;
-  release(&kmem.lock);
+kfree(void *pa) { 
+  acquire(&refs_lock);
+  if (PTR_TO_REFS(pa) < 0 || PTR_TO_REFS(pa) >= (PTR_TO_REFS(PHYSTOP) + 1))
+  {
+    panic("freeing wrong page");
+  }
+  --refs[PTR_TO_REFS(pa)];
+  if (refs[PTR_TO_REFS(pa)] == 0)
+  {
+    bd_free(pa);
+  }
+  release(&refs_lock);
 }
 
 // Allocate one 4096-byte page of physical memory.
@@ -68,15 +52,32 @@ kfree(void *pa)
 void *
 kalloc(void)
 {
-  struct run *r;
+  acquire(&refs_lock);
+  void *p = bd_malloc(PGSIZE);
+  if (p != 0)
+    refs[PTR_TO_REFS(p)] = 1;
+  release(&refs_lock);
+  return p;
+}
 
-  acquire(&kmem.lock);
-  r = kmem.freelist;
-  if(r)
-    kmem.freelist = r->next;
-  release(&kmem.lock);
+void add_ref(void *pa) {
+  acquire(&refs_lock);
+  if (PTR_TO_REFS(pa) < 0 || PTR_TO_REFS(pa) >= (PTR_TO_REFS(PHYSTOP) + 1))
+  {
+    panic("adding wrong page");
+  }
+  ++refs[PTR_TO_REFS(pa)];
+  release(&refs_lock);
+}
 
-  if(r)
-    memset((char*)r, 5, PGSIZE); // fill with junk
-  return (void*)r;
+int get_ref(void *pa) {
+  char refs_count;
+  acquire(&refs_lock);
+  if (PTR_TO_REFS(pa) < 0 || PTR_TO_REFS(pa) >= (PTR_TO_REFS(PHYSTOP) + 1))
+  {
+    panic("getting refs wrong page");
+  }
+  refs_count = refs[PTR_TO_REFS(pa)];
+  release(&refs_lock);
+  return refs_count;
 }
