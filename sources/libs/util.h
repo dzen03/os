@@ -1,0 +1,7 @@
+#ifndef OS_LAB4_SOURCES_LIBS_UTIL_H_
+#define OS_LAB4_SOURCES_LIBS_UTIL_H_
+
+#define PORT 50000
+#define ROOT_INODE ((uint32_t)12345)
+
+#endif //OS_LAB4_SOURCES_LIBS_UTIL_H_
