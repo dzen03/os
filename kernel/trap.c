@@ -89,7 +89,7 @@ usertrap(void)
       else {
         memmove((char *) new_pa, (char *) pa, PGSIZE);
         kfree((void *) pa);
-        // *pte = PA2PTE(new_pa) | flags;
+        *pte = PA2PTE(new_pa) | flags;
       }
     }
   } else if((which_dev = devintr()) != 0) {
