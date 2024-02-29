@@ -11,4 +11,4 @@ pipe: [oom-pipe, sigpipe];
 sched: [resched, sched-runtime]
 
 ## Run:
-python3 main.py
+`python3 main.py`
