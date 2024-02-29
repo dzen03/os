@@ -1,0 +1,8 @@
+#!/bin/bash
+
+cnt=$1
+timeout=$2
+
+sudo mpstat 1 $timeout | grep "all" > mpstat &
+
+sudo stress-ng --cpu 0 --sched-runtime $cnt --metrics --timeout $timeout | grep "metrc" | head -n 3 | tail -n 1

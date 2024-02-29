@@ -1,0 +1,11 @@
+#!/bin/bash
+
+device=$1
+cpus=$2
+method=$3
+timeout=$4
+
+sudo iostat 1 $timeout | grep "vda" > iostat &
+sudo mpstat 1 $timeout | grep "all" > mpstat &
+
+sudo stress-ng $device $cpus $method --metrics --timeout $timeout --pathological | grep "metrc" | head -n 3 | tail -n 1
